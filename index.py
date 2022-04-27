@@ -50,6 +50,5 @@ def make_frame(t):
                 )
     return mask2screen(frame, screensize)
 
-
 v = VideoClip(make_frame, duration=1)
 v.write_videofile("index.mp4", fps=60)

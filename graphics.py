@@ -24,8 +24,7 @@ def L2(x):
 def L1(x):
     return np.linalg.norm(x, axis=2, ord=1)
 
-# todo: a better blur
-def circle_mask(screensize, center, radius, blur=5, norm=L2):
+def circle_mask(screensize, center, radius, blur=1, norm=L2):
     offset = 1.0 * (radius - blur) / radius
     w, h = screensize
 
@@ -42,7 +41,7 @@ def circle_mask(screensize, center, radius, blur=5, norm=L2):
     return (1 - arr) * bg_color + arr * color
 
 
-def ring_mask(screensize, center, outer_radius, inner_radius, blur=5, norm=L2):
+def ring_mask(screensize, center, outer_radius, inner_radius, blur=1, norm=L2):
     if outer_radius <= inner_radius:
         return np.zeros(screensize[::-1])
     co = circle_mask(screensize, center, outer_radius, blur, norm)
