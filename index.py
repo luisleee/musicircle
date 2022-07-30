@@ -5,7 +5,7 @@ import numpy as np
 from seq import *
 import cairo
 
-# todo: add comments
+# TODO: add comments
 
 screensize = (1920, 1080)
 
@@ -15,7 +15,7 @@ if len(argv) <= 1:
 
 filename = argv[1]
 
-# todo: read config from file
+# TODO: read config from file
 seq, tr = get_seq(
     filename,
     [
@@ -97,7 +97,7 @@ def make_frame(t):
                     d = t - first_drum2
                     beat = (d * 26 // 15) % 2
                     r_beat = (d * 26 / 15) - int(d * 26 / 15)
-                    drift = ((d * -10) % screensize[1] + screensize[1]) % screensize[1]
+                    drift = ((d * -20) % screensize[1] + screensize[1]) % screensize[1]
                     for i in range(-7, 8):
                         blink = (i + beat) % 2 == 0
                         r_ = 10
@@ -190,5 +190,6 @@ def make_frame(t):
     return arr[:, :, 2::-1] * np.dstack([arr[:, :, 3] / 255] * 3)
 
 
+# TODO: read time from midi
 v = VideoClip(make_frame, duration=270)
 v.write_videofile("index.mp4", fps=60)
