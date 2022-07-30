@@ -1,5 +1,6 @@
-import numpy as np
-import cairo
+import math
+import random
+
 
 def map_range(r1, r2, x):
     (x1, x2) = r1
@@ -7,60 +8,159 @@ def map_range(r1, r2, x):
     return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
 
 
-
-# def mask2screen(mask, screensize):
-#     mask = np.minimum(1, np.maximum(0, mask))
-#     ones = np.ones(screensize[::-1])
-#     mask = 255 * (ones - mask)
-#     return np.dstack([mask] * 3)
+def pol2rec(rho, theta):
+    return (rho * math.cos(theta), rho * math.sin(theta))
 
 
-# def zero_mask(screensize):
-#     return np.zeros(screensize[::-1])
+def circle(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0, fill=False):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    ctx.arc(0, 0, r, 0, 2 * math.pi)
+    if fill:
+        ctx.fill()
+    else:
+        ctx.stroke()
+    ctx.restore()
 
 
-# def Linf_modified(x):
-#     x[:, :, 0] *= 4
-#     return np.linalg.norm(x, axis=2, ord=np.inf)
+def star(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    theta0 = -math.pi / 10
+    x0, y0 = pol2rec(r, theta0)
+
+    c = math.sin(math.pi / 10) / math.sin(math.pi * 3 / 10)
+    ctx.move_to(x0, y0)
+    for i in range(10):
+        ri = r
+        if i % 2 == 0:
+            ri *= c
+        theta = theta0 + (i + 1) * math.pi / 5
+        xi, yi = pol2rec(ri, theta)
+        ctx.line_to(xi, yi)
+
+    ctx.stroke()
+    ctx.restore()
 
 
-# def Linf(x):
-#     return np.linalg.norm(x, axis=2, ord=np.inf)
+def square(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    r *= math.sqrt(2)
+    theta0 = math.pi / 4
+    x0, y0 = pol2rec(r, theta0)
+
+    ctx.move_to(x0, y0)
+    for i in range(4):
+        theta = theta0 + (i + 1) * math.pi / 2
+        xi, yi = pol2rec(r, theta)
+        ctx.line_to(xi, yi)
+
+    ctx.stroke()
+    ctx.restore()
 
 
-# def L2(x):
-#     return np.linalg.norm(x, axis=2, ord=2)
+def hexagon(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    theta0 = math.pi / 2
+    x0, y0 = pol2rec(r, theta0)
+
+    ctx.move_to(x0, y0)
+    for i in range(6):
+        theta = theta0 + (i + 1) * math.pi / 3
+        xi, yi = pol2rec(r, theta)
+        ctx.line_to(xi, yi)
+
+    ctx.stroke()
+    ctx.restore()
 
 
-# def L1(x):
-#     return np.linalg.norm(x, axis=2, ord=1)
+def pentagon(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    theta0 = math.pi / 2
+    x0, y0 = pol2rec(r, theta0)
+
+    ctx.move_to(x0, y0)
+    for i in range(5):
+        theta = theta0 + (i + 1) * math.pi * 2 / 5
+        xi, yi = pol2rec(r, theta)
+        ctx.line_to(xi, yi)
+
+    ctx.stroke()
+    ctx.restore()
 
 
-# def opaque(mask, opacity):
-#     return mask * opacity
+def eq_triangle(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, phi=0):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.set_line_width(w)
+    ctx.rotate(phi)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
+
+    theta0 = 0
+    x0, y0 = pol2rec(r, theta0)
+
+    ctx.move_to(x0, y0)
+    for i in range(3):
+        theta = theta0 + (i + 1) * math.pi * 2 / 3
+        xi, yi = pol2rec(r, theta)
+        ctx.line_to(xi, yi)
+
+    ctx.stroke()
+    ctx.restore()
 
 
+def cross(ctx, x, y, r, w, color=(1, 1, 1), alpha=1, fill=False):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(math.pi / 4)
+    ctx.set_source_rgba(color[0], color[1], color[2], alpha)
 
-# def circle_mask(screensize, center, radius, blur=2, norm=L2):
-#     offset = 1.0 * (radius - blur) / radius
-#     w, h = screensize
+    arr = [
+        (-w / 2, r),
+        (-w / 2, w / 2),
+        (-r, w / 2),
+        (-r, -w / 2),
+        (-w / 2, -w / 2),
+        (-w / 2, -r),
+        (w / 2, -r),
+        (w / 2, -w / 2),
+        (r, -w / 2),
+        (r, w / 2),
+        (w / 2, w / 2),
+        (w / 2, r),
+    ]
 
-#     color = np.array(0).astype(float)
-#     bg_color = np.array(1).astype(float)
+    x0, y0 = arr[-1]
+    ctx.move_to(x0, y0)
+    for i in arr:
+        xi, yi = i
+        ctx.line_to(xi, yi)
 
-#     center = np.array(center[::-1]).astype(float)
-#     M = np.dstack(np.meshgrid(np.arange(w), np.arange(h))[::-1]).astype(float)
-#     d = norm(M - center)
-#     arr = d - offset * radius
-#     arr = arr / ((1 - offset) * radius)
-#     arr = np.minimum(1.0, np.maximum(0, arr))
-
-#     return (1 - arr) * bg_color + arr * color
-
-
-# def ring_mask(screensize, center, outer_radius, inner_radius, blur=2, norm=L2):
-#     if outer_radius <= inner_radius:
-#         return np.zeros(screensize[::-1])
-#     co = circle_mask(screensize, center, outer_radius, blur, norm)
-#     ci = circle_mask(screensize, center, inner_radius, blur, norm)
-#     return co - ci
+    if fill:
+        ctx.fill()
+    else:
+        ctx.stroke()
+    ctx.restore()
