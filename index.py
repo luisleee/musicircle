@@ -16,7 +16,7 @@ if len(argv) <= 1:
 filename = argv[1]
 
 # TODO: read config from file
-seq, tr = get_seq(
+seq, tr, duration = get_seq(
     filename,
     [
         ("guitar", "1.Guitar and Banjo"),
@@ -58,7 +58,7 @@ def make_frame(t):
     for (time, pitch, inst, velocity) in seq:
         if inst == "drum2":
             if time < t:
-                last_drum2 = pitch
+                last_drum2 = (time, pitch)
                 if c == 0:
                     first_drum2 = time
                 c += 1
@@ -101,30 +101,37 @@ def make_frame(t):
                     for i in range(-7, 8):
                         blink = (i + beat) % 2 == 0
                         r_ = 10
-                        if (i + 7) % 5 == last_drum2:
+                        if (i + 7) % 5 == last_drum2[1]:
                             r_ += 20
+                        radius = screensize[1] / 14 + map_range((0, 1), (r_, 0), r_beat)
+                        alpha = 1
+                        if c == 0:
+                            alpha = map_range((0, 1), (1, 0), t - last_drum2[0])
+                            radius = screensize[1] / 14 + map_range(
+                                (0, 1), (0, 50), t - last_drum2[0]
+                            )
                         cross(
                             ctx,
                             screensize[1] / 14,
                             i * screensize[1] / 7 + drift,
-                            screensize[1] / 14 + map_range((0, 1), (r_, 0), r_beat),
+                            radius,
                             20,
+                            alpha=alpha,
                             fill=blink,
                         )
                         cross(
                             ctx,
                             screensize[0] - screensize[1] / 14,
                             screensize[1] - (i * screensize[1] / 7 + drift),
-                            screensize[1] / 14 + map_range((0, 1), (r_, 0), r_beat),
+                            radius,
                             20,
+                            alpha=alpha,
                             fill=blink,
                         )
             elif inst == "broken":
                 if velocity < 100:
                     continue
-                x = random.uniform(
-                    screensize[1] / 7, screensize[0] - screensize[1] / 7
-                )
+                x = random.uniform(screensize[1] / 7, screensize[0] - screensize[1] / 7)
                 y = random.uniform(0, screensize[1])
                 phi0 = random.uniform(0, math.pi * 2)
                 omega = math.pi / 10
@@ -139,9 +146,7 @@ def make_frame(t):
                         phi=(phi0 + phi(delta, omega * (i + 1))) * dir,
                     )
             elif inst == "piano":
-                x = random.uniform(
-                    screensize[1] / 7, screensize[0] - screensize[1] / 7
-                )
+                x = random.uniform(screensize[1] / 7, screensize[0] - screensize[1] / 7)
                 y = random.uniform(0, screensize[1])
                 circle(
                     ctx,
@@ -166,15 +171,15 @@ def make_frame(t):
                     y = random.uniform(50, screensize[1] - 50)
                     arr.append((x, y))
                     circle(ctx, x, y, 5, 0, fill=True)
-                
+
                 ctx.set_line_width(2)
                 for i in range(3):
                     j = len(arr) - 1 - i
                     if j - 1 > 0:
-                        alpha = map_range((0, 45 / 104),(1, 0), t - notes[j])
+                        alpha = map_range((0, 45 / 104), (1, 0), t - notes[j])
                         ctx.set_source_rgba(1, 1, 1, alpha)
                         ctx.move_to(arr[j][0], arr[j][1])
-                        ctx.line_to(arr[j-1][0], arr[j-1][1])
+                        ctx.line_to(arr[j - 1][0], arr[j - 1][1])
                         ctx.stroke()
             elif inst == "synth2":
                 x = screensize[0] - r(1)
@@ -190,6 +195,5 @@ def make_frame(t):
     return arr[:, :, 2::-1] * np.dstack([arr[:, :, 3] / 255] * 3)
 
 
-# TODO: read time from midi
-v = VideoClip(make_frame, duration=270)
+v = VideoClip(make_frame, duration=duration)
 v.write_videofile("index.mp4", fps=60)

@@ -6,6 +6,7 @@ def get_seq(filename, tracks):
     tpb = mid.ticks_per_beat
     arr_notes = []
     dict_tracks = {}
+    duration = 0
     for (alias, name) in tracks:
         # match the name
         tr = None
@@ -23,6 +24,7 @@ def get_seq(filename, tracks):
             t += mido.tick2second(msg.time, tpb, tempo)
             if msg.type == "note_on":
                 arr.append((t, msg.note, alias, msg.velocity))
+        duration = max(duration, t)
 
         # index by pitch
         arr.sort(key=lambda x: x[1])
@@ -40,4 +42,4 @@ def get_seq(filename, tracks):
         arr_notes.extend(indexed_arr)
     arr_notes.sort(key=lambda x: x[0])
 
-    return (arr_notes, dict_tracks)
+    return (arr_notes, dict_tracks, duration)
