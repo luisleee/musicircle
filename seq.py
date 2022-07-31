@@ -19,12 +19,16 @@ def get_seq(filename, tracks):
 
         # get notes in the track
         t = 0
+        tick = 0
         arr = []
         for msg in tr:
+            if msg.type == "control_change":
+                continue
             t += mido.tick2second(msg.time, tpb, tempo)
+            tick += msg.time
             if msg.type == "note_on":
                 arr.append((t, msg.note, alias, msg.velocity))
-        duration = max(duration, t)
+        duration = max(duration, mido.tick2second(tick, tpb, tempo))
 
         # index by pitch
         arr.sort(key=lambda x: x[1])
